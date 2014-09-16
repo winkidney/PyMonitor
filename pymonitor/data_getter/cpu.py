@@ -5,6 +5,7 @@
 __author__ = 'winkidney'
 
 import logging
+import psutil
 
 from .base import InfoBase
 
@@ -12,25 +13,26 @@ from .base import InfoBase
 class CPU(InfoBase):
 
     def __init__(self):
+        pass
+
+    def get_asdict(self):
         try:
             self.cpuinfo = open('/proc/stat', 'r').readlines()
             self.loadavg = open('/proc/loadavg', 'r').readlines()
         except IOError:
-            logging.warning("Couldn't read CPUINFO !")
-
-    def get_asdict(self):
-        if not hasattr(self, 'cpuinfo') or not hasattr(self, 'loadavg'):
+            logging.warning("Couldn't read /proc/stat and /proc/loadavg !")
             return {}
         res_dict = {}
         for line in self.cpuinfo:
             if line.startswith('cpu'):
                 result = line.split()
                 res_dict[result[0]] = {
-                    'user': int(result[1]),
-                    'nice': int(result[2]),
-                    'system': int(result[3]),
-                    'idle': int(result[4]),
-                    'wait': int(result[5]),
+                    'User': int(result[1]),
+                    'Nice': int(result[2]),
+                    'System': int(result[3]),
+                    'Idle': int(result[4]),
+                    'Wait': int(result[5]),
                 }
-        res_dict['loadavg'] = [float(i) for i in self.loadavg[0].split()[:2]]
+        res_dict['LoadAVG'] = [float(i) for i in self.loadavg[0].split()[:2]]
+        res_dict['CpuPercent'] = psutil.cpu_percent()
         return res_dict

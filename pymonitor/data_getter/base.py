@@ -8,13 +8,16 @@ import json
 
 
 class InfoBase(object):
-
+    """
+    Base class of data getter.
+    __init__ and get_asdict method must be overwrite.
+    """
     def __init__(self):
         raise NotImplementedError('This base class can not be instanced directly!')
 
     def get_asdict(self):
         """
-        :return: python dict.
+        :return: dict.
         """
         raise NotImplementedError('You must overwrite this method')
 
@@ -41,14 +44,21 @@ class InfoBase(object):
         return json.dumps(res_dict)
 
     def _format_number(self, byte_str, unit):
+        """
+
+        :param byte_str: the src number in unit `byte`
+        :type byte_str: str
+        :type unit: str
+        :param unit: string stands for unit, `byte` or 'kb'
+        :return: integer
+        """
         unit = unit.upper()
         if unit not in ('BYTE', 'KB'):
-            print unit
             raise ValueError('Unexcepted unit parament!')
         if unit == 'KB':
             divisor = 1024
         else:
             divisor = 1
         if isinstance(byte_str, (str, unicode)) and byte_str.isdigit():
-            byte_str = int(byte_str) / divisor
-        return byte_str
+            result = int(byte_str) / divisor
+        return result

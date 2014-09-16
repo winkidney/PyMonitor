@@ -30,9 +30,9 @@ Description:
         For more details refer to Documentation/iostats.txt
 """
 
-
-
 import logging
+import re
+import psutil
 
 from .base import InfoBase
 
@@ -40,20 +40,84 @@ from .base import InfoBase
 class Disk(InfoBase):
 
     def __init__(self):
+        pass
+
+    def get_asdict(self, dev=None):
+        res_dict = {}
+        res_dict['DiskStats'] = self._get_diskstats(dev)
+        res_dict['SwapInfo'] = self._get_swap_info()
+        res_dict['MountedInfo'] = self._get_mounted_info()
+        res_dict['StorageStatus'] = self._get_partions()
+        return res_dict
+
+    @staticmethod
+    def _get_fs_usage(mountpoint):
+        """
+        Return dist usage dict by given mountpoion str.
+        :param mountpoint: string stands for mountpoint
+        :type mountpoint:str
+        :return: dict
+        """
+        column_list = ['total', 'used', 'free', 'percent']
+        result = list(psutil.disk_usage(mountpoint))
+        return dict(zip(column_list, result))
+
+    def _get_partions(self):
+        column_list = ['device', 'mountpoint', 'fstype', 'opts']
+        disks = psutil.disk_partitions()
+        res_list = []
+        for disk in disks:
+            disk_dict = dict(zip(column_list, disk))
+            disk_dict['SpaceInfo'] = self._get_fs_usage(disk_dict['mountpoint'])
+            res_list.append(disk_dict)
+        return res_list
+
+    def _get_swap_info(self):
         try:
-            self.network = open('/proc/diskstats', 'r').readlines()
+            self.swaps = open('/proc/swaps', 'r').readlines()
+        except IOError:
+            logging.warning("Couldn't read /proc/swaps !")
+            return {}
+        result_dict = {}
+        column_swap = ['Filename', 'Type', 'Size', 'Used', 'Priority']
+        for line in self.swaps[1:]:
+            result = dict(zip(column_swap, line.split()))
+            result_dict[result['Filename']] = result
+        return result_dict
+
+    def _get_mounted_info(self):
+        try:
+            self.mtab = open('/etc/mtab', 'r').readlines()
+        except IOError:
+            logging.warning("Couldn't read /proc/mtab !")
+            return {}
+        result_dict = {}
+        column_mounted = ['Filename', 'MountedDir', 'FileSystem', 'Option', 'DumpOption', 'FSCKOption']
+        for line in self.mtab:
+            result = dict(zip(column_mounted, line.split()))
+            result_dict[result['Filename']] = result
+        return result_dict
+
+    def _get_diskstats(self, dev):
+        """
+        Get all info from /proc/diskstats
+        :param dev: exclude device list, each element is a regx str.
+        :type dev: list
+        :return: dict
+        """
+        try:
+            self.diskstats = open('/proc/diskstats', 'r').readlines()
         except IOError:
             logging.warning("Couldn't read /proc/diskstats !")
-
-    def get_asdict(self, dev=None, unit='byte'):
+            return {}
         result = {}
         columns_disk = ['m', 'mm', 'dev', 'reads', 'rd_mrg', 'rd_sectors',
-                    'ms_reading', 'writes', 'wr_mrg', 'wr_sectors',
-                    'ms_writing', 'cur_ios', 'ms_doing_io', 'ms_weighted']
+                        'ms_reading', 'writes', 'wr_mrg', 'wr_sectors',
+                        'ms_writing', 'cur_ios', 'ms_doing_io', 'ms_weighted']
 
         columns_partition = ['m', 'mm', 'dev', 'reads', 'rd_sectors', 'writes', 'wr_sectors']
 
-        lines = self.network
+        lines = self.diskstats
         for line in lines:
             if line == '':
                 continue
@@ -67,11 +131,15 @@ class Disk(InfoBase):
                 continue
 
             data = dict(zip(columns, split))
-            if dev != None and dev != data['dev']:
-                continue
+            if dev:
+                for regx in dev:
+                    if re.search(regx, data['dev']):
+                        continue
             for key in data:
                 if key != 'dev':
                     data[key] = int(data[key])
             result[data['dev']] = data
 
         return result
+
+    #todo : add io status monitor method

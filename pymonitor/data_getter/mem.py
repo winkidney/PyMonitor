@@ -23,13 +23,13 @@ class Memory(InfoBase):
     UNIT: KB
     """
     def __init__(self):
+        pass
+
+    def get_asdict(self):
         try:
             self.meminfo = open('/proc/meminfo', 'r').read()
         except IOError:
             logging.warning("Couldn't read /proc/meminfo !")
-
-    def get_asdict(self):
-        if not hasattr(self, 'meminfo'):
             return {}
         res_dict = {}
         res_dict['MemTotal'] = re.search(MEMTOTAL_REGX, self.meminfo)

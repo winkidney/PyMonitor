@@ -1,7 +1,7 @@
 # Created by .gitignore support plugin (hsz.mobi)
 ### Python template
 #specified files/dirs
-
+.idea
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

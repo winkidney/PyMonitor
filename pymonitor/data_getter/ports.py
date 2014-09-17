@@ -49,6 +49,6 @@ class Ports(InfoBase):
             try:
                 pname = psutil.Process(pid).name()
             except (psutil.NoSuchProcess, psutil.AccessDenied):
-                logging('Can not access [%s] s process name!' % pid)
+                logging.warning('Can not access [%s] s process name!' % pid)
         self.pids_names[pid] = pname
         return pname

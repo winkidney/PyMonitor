@@ -54,7 +54,7 @@ class InfoBase(object):
         """
         unit = unit.upper()
         if unit not in ('BYTE', 'KB'):
-            raise ValueError('Unexcepted unit parament!')
+            raise ValueError('Unexcepted unit parameter!')
         if unit == 'KB':
             divisor = 1024
         else:

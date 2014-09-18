@@ -39,8 +39,8 @@ class Processes(InfoBase):
         :return:
         """
         procs_list = self._get_processes(pids)
-        column_list = ['pid', 'ppid', 'name', 'create_time',
-                       'username', 'io_counters', 'cpu_percent', 'memory_info']
+        column_list = ['username', 'pid', 'name', 'cpu_percent', 'memory_info', 'nice',
+                       'terminal', 'status', 'create_time', 'io_counters', 'cmdline']
         result_list = []
         for process in procs_list:
             if process:
